@@ -6,6 +6,8 @@ import (
 	"gis/internal/models"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func GetAlbums(w http.ResponseWriter, r *http.Request) {
@@ -34,8 +36,19 @@ func GetAlbums(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := EmptyResponse{
+		Success: true,
+		Code:    http.StatusOK,
+		Message: "Albums retrieved successfully",
+		Data: struct {
+			Albums []models.Album `json:"albums"`
+		}{
+			Albums: albums,
+		},
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(albums)
+	json.NewEncoder(w).Encode(response)
 }
 
 func CreateAlbum(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +71,59 @@ func CreateAlbum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(album)
+	response := EmptyResponse{
+		Success: true,
+		Code:    http.StatusCreated,
+		Message: "Album created successfully",
+		Data: struct {
+			Albums []models.Album `json:"albums"`
+		}{
+			Albums: []models.Album{album},
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func UpdateAlbum(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "PUT" {
+		http.Error(w, "Method is not supported.", http.StatusNotFound)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "Missing id parameter", http.StatusBadRequest)
+		return
+	}
+
+	var album models.Album
+	if err := json.NewDecoder(r.Body).Decode(&album); err != nil {
+		log.Printf("Error decoding JSON: %v", err)
+		http.Error(w, "Error decoding JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err := config.DB.Exec("UPDATE albums SET title = ?, artist = ?, price = ? WHERE id = ?", album.Title, album.Artist, album.Price, id)
+	if err != nil {
+		log.Printf("Error updating album: %v", err)
+		http.Error(w, "Error updating album: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := EmptyResponse{
+		Success: true,
+		Code:    http.StatusOK,
+		Message: "Album updated successfully",
+		Data: struct {
+			Albums []models.Album `json:"albums"`
+		}{
+			Albums: []models.Album{album},
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
