@@ -1,4 +1,15 @@
 const apiUrl = 'http://localhost:8080/mcdonalds'; // Replace with your actual API URL
+let map;
+let userMarker;
+let storeMarkers = [];
+
+function initMap() {
+    map = L.map('map').setView([0, 0], 13); // Center map at [0,0] initially
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+}
 
 function getLocation() {
     if (navigator.geolocation) {
@@ -12,6 +23,13 @@ function findNearestMcDonald(position) {
     const userLat = position.coords.latitude;
     const userLon = position.coords.longitude;
 
+    // Center the map on the user's location
+    if (userMarker) {
+        map.removeLayer(userMarker);
+    }
+    userMarker = L.marker([userLat, userLon]).addTo(map);
+    map.setView([userLat, userLon], 13);
+
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
@@ -24,12 +42,22 @@ function findNearestMcDonald(position) {
             let nearestStore = null;
             let shortestDistance = Infinity;
 
+            // Clear previous store markers
+            storeMarkers.forEach(marker => map.removeLayer(marker));
+            storeMarkers = [];
+
             stores.forEach(store => {
                 const distance = calculateDistance(userLat, userLon, store.latitude, store.longitude);
                 if (distance < shortestDistance) {
                     shortestDistance = distance;
                     nearestStore = store;
                 }
+
+                // Add store marker to the map
+                const marker = L.marker([store.latitude, store.longitude])
+                    .bindPopup(`<b>${store.name}</b><br>Distance: ${distance.toFixed(2)} km`)
+                    .addTo(map);
+                storeMarkers.push(marker);
             });
 
             if (nearestStore) {
@@ -83,3 +111,6 @@ function showError(error) {
     }
     document.getElementById('result').innerHTML = errorMessage;
 }
+
+// Initialize the map when the page loads
+window.onload = initMap;

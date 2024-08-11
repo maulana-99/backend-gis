@@ -4,10 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Find Nearest McDonald's</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
         }
         #result {
             margin-top: 20px;
@@ -17,7 +22,9 @@
 <body>
     <h1>Find Nearest McDonald's</h1>
     <button onclick="getLocation()">Find Nearest McDonald's</button>
+    <div id="map"></div>
     <div id="result"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
