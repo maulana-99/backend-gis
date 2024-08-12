@@ -1,10 +1,10 @@
-const apiUrl = 'http://localhost:8080/mcdonalds'; // Replace with your actual API URL
+const apiUrl = 'http://localhost:8080/stores'; // Ganti dengan URL API Anda
 let map;
 let userMarker;
 let storeMarkers = [];
 
 function initMap() {
-    map = L.map('map').setView([0, 0], 13); // Center map at [0,0] initially
+    map = L.map('map').setView([0, 0], 13); // Pusatkan peta pada [0,0] awalnya
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -13,17 +13,17 @@ function initMap() {
 
 function getLocation() {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(findNearestMcDonald, showError);
+        navigator.geolocation.getCurrentPosition(findNearestStore, showError);
     } else {
         document.getElementById('result').innerHTML = "Geolocation is not supported by this browser.";
     }
 }
 
-function findNearestMcDonald(position) {
+function findNearestStore(position) {
     const userLat = position.coords.latitude;
     const userLon = position.coords.longitude;
 
-    // Center the map on the user's location
+    // Pusatkan peta pada lokasi pengguna
     if (userMarker) {
         map.removeLayer(userMarker);
     }
@@ -33,16 +33,16 @@ function findNearestMcDonald(position) {
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
-            const stores = data.data.mcdonalds;
+            const stores = data.stores; // Asumsikan data berbentuk { stores: [{name, latitude, longitude}, ...]}
             if (stores.length === 0) {
-                document.getElementById('result').innerHTML = "No McDonald's locations found.";
+                document.getElementById('result').innerHTML = "No stores found.";
                 return;
             }
 
             let nearestStore = null;
             let shortestDistance = Infinity;
 
-            // Clear previous store markers
+            // Hapus marker toko sebelumnya
             storeMarkers.forEach(marker => map.removeLayer(marker));
             storeMarkers = [];
 
@@ -53,7 +53,7 @@ function findNearestMcDonald(position) {
                     nearestStore = store;
                 }
 
-                // Add store marker to the map
+                // Tambahkan marker toko ke peta
                 const marker = L.marker([store.latitude, store.longitude])
                     .bindPopup(`<b>${store.name}</b><br>Distance: ${distance.toFixed(2)} km`)
                     .addTo(map);
@@ -62,7 +62,7 @@ function findNearestMcDonald(position) {
 
             if (nearestStore) {
                 document.getElementById('result').innerHTML = `
-                    Nearest McDonald's:
+                    Nearest Store:
                     <ul>
                         <li>Name: ${nearestStore.name}</li>
                         <li>Latitude: ${nearestStore.latitude}</li>
@@ -73,20 +73,20 @@ function findNearestMcDonald(position) {
             }
         })
         .catch(error => {
-            console.error('Error fetching McDonald\'s data:', error);
-            document.getElementById('result').innerHTML = "Error fetching McDonald's data.";
+            console.error('Error fetching store data:', error);
+            document.getElementById('result').innerHTML = "Error fetching store data.";
         });
 }
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Radius of the Earth in km
+    const R = 6371; // Radius bumi dalam km
     const dLat = toRadians(lat2 - lat1);
     const dLon = toRadians(lon2 - lon1);
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
               Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
+    return R * c; // Jarak dalam km
 }
 
 function toRadians(degrees) {
@@ -112,5 +112,5 @@ function showError(error) {
     document.getElementById('result').innerHTML = errorMessage;
 }
 
-// Initialize the map when the page loads
+// Inisialisasi peta saat halaman dimuat
 window.onload = initMap;

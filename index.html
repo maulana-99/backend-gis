@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Geolocation and Map</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearest Store Finder</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         #map {
@@ -13,88 +15,17 @@
             padding: 20px;
         }
     </style>
-    <script>
-        let map;
-        let userMarker;
-
-        function initMap() {
-            map = L.map('map').setView([0, 0], 13); // Initialize map with default center
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-        }
-
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
-        }
-
-        function showPosition(position) {
-            var latitude = position.coords.latitude;
-            var longitude = position.coords.longitude;
-            document.getElementById("location").innerHTML = "Latitude: " + latitude + 
-            "<br>Longitude: " + longitude;
-            reverseGeocode(latitude, longitude);
-
-            // Update map view and add user marker
-            if (userMarker) {
-                map.removeLayer(userMarker);
-            }
-            userMarker = L.marker([latitude, longitude]).addTo(map);
-            map.setView([latitude, longitude], 13);
-        }
-
-        function reverseGeocode(latitude, longitude) {
-            var url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data) {
-                        var address = data.display_name;
-                        document.getElementById("address").innerHTML = "Nearest Address: " + address;
-                    } else {
-                        alert("No address found");
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("Error fetching address");
-                });
-        }
-
-        function showError(error) {
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    alert("User denied the request for Geolocation.");
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    alert("Location information is unavailable.");
-                    break;
-                case error.TIMEOUT:
-                    alert("The request to get user location timed out.");
-                    break;
-                case error.UNKNOWN_ERROR:
-                    alert("An unknown error occurred.");
-                    break;
-            }
-        }
-
-        // Initialize map when the page loads
-        window.onload = initMap;
-    </script>
 </head>
 <body>
 
-<h2>Geolocation and Map Example</h2>
+<h2>Find the Nearest Store</h2>
 <button onclick="getLocation()">Get My Location</button>
 <p id="location"></p>
-<p id="address"></p>
+<p id="result"></p>
 <div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="main.js"></script>
 
 </body>
 </html>
