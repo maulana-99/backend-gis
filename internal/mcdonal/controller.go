@@ -51,6 +51,37 @@ func GetMcDonalds(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func GetMcDonaldById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "Missing id parameter", http.StatusBadRequest)
+		return
+	}
+
+	var mcdonald models.Mcdonald
+	err := config.DB.QueryRow("SELECT id, name, latitude, longitude FROM mcdonals WHERE id = ?", id).Scan(&mcdonald.ID, &mcdonald.Name, &mcdonald.Latitude, &mcdonald.Longitude)
+	if err != nil {
+		log.Printf("Error getting McDonald by id: %v", err)
+		http.Error(w, "Error getting McDonald by id: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := EmptyResponse{
+		Success: true,
+		Code:    http.StatusOK,
+		Message: "McDonald retrieved successfully",
+		Data: struct {
+			McDonalds []models.Mcdonald `json:"mcdonalds"`
+		}{
+			McDonalds: []models.Mcdonald{mcdonald},
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 func CreateMcDonald(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
@@ -88,7 +119,6 @@ func CreateMcDonald(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-
 func UpdateMcDonald(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "PUT" {
 		http.Error(w, "Method is not supported.", http.StatusNotFound)
@@ -103,13 +133,20 @@ func UpdateMcDonald(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mcdonald models.Mcdonald
-	if err := json.NewDecoder(r.Body).Decode(&mcdonald); err != nil {
-		log.Printf("Error decoding JSON: %v", err)
-		http.Error(w, "Error decoding JSON: "+err.Error(), http.StatusBadRequest)
+	err := config.DB.QueryRow("SELECT id, name, latitude, longitude FROM mcdonals WHERE id = ?", id).Scan(&mcdonald.ID, &mcdonald.Name, &mcdonald.Latitude, &mcdonald.Longitude)
+	if err != nil {
+		log.Printf("Error getting McDonald by id for update: %v", err)
+		http.Error(w, "Error getting McDonald by id for update: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	_, err := config.DB.Exec("UPDATE mcdonals SET name = ?, latitude = ?, longitude = ? WHERE id = ?", mcdonald.Name, mcdonald.Latitude, mcdonald.Longitude, id)
+	if err := json.NewDecoder(r.Body).Decode(&mcdonald); err != nil {
+		log.Printf("Error decoding JSON for update: %v", err)
+		http.Error(w, "Error decoding JSON for update: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err = config.DB.Exec("UPDATE mcdonals SET name = ?, latitude = ?, longitude = ? WHERE id = ?", mcdonald.Name, mcdonald.Latitude, mcdonald.Longitude, id)
 	if err != nil {
 		log.Printf("Error updating McDonald: %v", err)
 		http.Error(w, "Error updating McDonald: "+err.Error(), http.StatusInternalServerError)
@@ -125,6 +162,36 @@ func UpdateMcDonald(w http.ResponseWriter, r *http.Request) {
 		}{
 			McDonalds: []models.Mcdonald{mcdonald},
 		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func DeleteMcDonald(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "DELETE" {
+		http.Error(w, "Method is not supported.", http.StatusNotFound)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "Missing id parameter", http.StatusBadRequest)
+		return
+	}
+
+	_, err := config.DB.Exec("DELETE FROM mcdonals WHERE id = ?", id)
+	if err != nil {
+		log.Printf("Error deleting McDonald: %v", err)
+		http.Error(w, "Error deleting McDonald: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := EmptyResponse{
+		Success: true,
+		Code:    http.StatusOK,
+		Message: "McDonald deleted successfully",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
