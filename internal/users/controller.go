@@ -26,7 +26,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Query the database with the provided username and password
-	rows, err := config.DB.Query("SELECT username, password FROM users WHERE username = ? AND password = ?", credentials.Username, credentials.Password)
+	rows, err := config.DB.Query("SELECT id, username, password FROM users WHERE username = ? AND password = ?", credentials.Username, credentials.Password)
 	if err != nil {
 		log.Printf("Error querying the database: %v", err)
 		http.Error(w, "Error querying the database: "+err.Error(), http.StatusInternalServerError)
@@ -37,7 +37,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	var users []models.Users
 	for rows.Next() {
 		var user models.Users
-		if err := rows.Scan(&user.Username, &user.Password); err != nil {
+		if err := rows.Scan(&user.ID, &user.Username, &user.Password); err != nil {
 			log.Printf("Error scanning row: %v", err)
 			http.Error(w, "Error scanning row: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -48,6 +48,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if err := rows.Err(); err != nil {
 		log.Printf("Error iterating rows: %v", err)
 		http.Error(w, "Error iterating rows: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Check if no users were found
+	if len(users) == 0 {
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 		return
 	}
 
