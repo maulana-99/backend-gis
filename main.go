@@ -10,20 +10,21 @@ import (
 )
 
 func main() {
-	// Initialize the database once when the application starts
+	// Inisialisasi database saat aplikasi mulai
 	config.InitDB()
-	defer config.CloseDB() // Close the database when the application stops
+	defer config.CloseDB() // Menutup koneksi database saat aplikasi berhenti
 
-	// Setup the router
+	// Mengatur router dengan rute yang telah dikonfigurasi
 	router := routers.SetupRouter()
 
-	// Allow CORS
+	// Mengatur CORS (Cross-Origin Resource Sharing)
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders: []string{"Content-Type", "Accept", "Origin", "X-Requested-With"},
-	}).Handler(router)
+		AllowedOrigins: []string{"*"}, // Mengizinkan semua asal
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"}, // Mengizinkan metode HTTP tertentu
+		AllowedHeaders: []string{"Content-Type", "Accept", "Origin", "X-Requested-With"}, // Mengizinkan header tertentu
+	}).Handler(router) // Membungkus router dengan handler CORS
 
+	// Memulai server HTTP pada port 8080
 	log.Println("Server is running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", corsHandler))
+	log.Fatal(http.ListenAndServe(":8080", corsHandler)) // Menghentikan aplikasi jika server mengalami error
 }

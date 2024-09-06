@@ -4,6 +4,7 @@ import (
 	"gis/internal/models"
 )
 
+// EmptyResponse adalah struktur untuk respons kosong
 type EmptyResponse struct {
 	Success bool   `json:"success"`
 	Code    int    `json:"code"`
